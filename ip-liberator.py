@@ -36,14 +36,21 @@ def whats_my_ip():
     return None
 
 
-def has_port(rule: dict, *ports: int):
+def has_port(rule: dict, *ports: int) -> bool:
     return rule['FromPort'] in ports and rule['FromPort'] == rule['ToPort']
 
 
-def make_rule(description: str, cidr_ip: str, ports: Sequence[int]):
+def make_rule(description: str, cidr_ip: str,
+              *, port: int = None, from_port: int = None, to_port: int = None) -> dict:
+    if port is not None:
+        assert from_port is None and to_port is None, "cannot mix 'port' with 'from_port' and 'to_port'"
+        from_port = to_port = port
+    else:
+        assert from_port is not None and to_port is not None, "port range not set"
+
     return {
-        'FromPort': ports[0],
-        'ToPort': ports[1],
+        'FromPort': from_port,
+        'ToPort': to_port,
         'IpProtocol': 'tcp',
         'IpRanges': [
             {
@@ -54,7 +61,7 @@ def make_rule(description: str, cidr_ip: str, ports: Sequence[int]):
     }
 
 
-def make_index(operator, services, group):
+def make_index(operator: str, services: Sequence[dict], group: dict):
     # firstly, create index from user-informed parameters!
     svc_index = {
         'rules': {},
@@ -82,12 +89,9 @@ def make_index(operator, services, group):
         for ip_range in ip_perm['IpRanges']:
             description = ip_range['Description']
             if description in svc_index['rules']:
-                svc_index['rules'][description]['permission'] = make_rule(description,
-                                                                          ip_range['CidrIp'],
-                                                                          ports=(
-                                                                              ip_perm['FromPort'],
-                                                                              ip_perm['ToPort'],
-                                                                          ))
+                svc_index['rules'][description]['permission'] = make_rule(description, ip_range['CidrIp'],
+                                                                          from_port=ip_perm['FromPort'],
+                                                                          to_port=ip_perm['ToPort'])
 
     return svc_index
 
@@ -117,7 +121,7 @@ def main():
         # permission to set new IP
         ip = rule['service'].get('ip') or whats_my_ip()
         ports = rule['service']['port']
-        permission = make_rule(desc, ip, ports)
+        permission = make_rule(desc, ip, from_port=ports[0], to_port=ports[1])
 
         try:
             ec2.authorize_security_group_ingress(
