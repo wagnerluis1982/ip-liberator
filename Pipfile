@@ -10,3 +10,7 @@ python_version = "3.6"
 "boto3" = "== 1.7.*"
 
 [dev-packages]
+pylint = "*"
+ipython = "*"
+rope = "*"
+"autopep8" = "*"
