@@ -104,10 +104,12 @@ def main(args=sys.argv[1:]):
     ec2 = session.client('ec2')
 
     for group_id in security_groups:
+        print("Entering security group", group_id)
+
         try:
             group = ec2.describe_security_groups(GroupIds=[group_id])['SecurityGroups'][0]
         except IndexError:
-            print("Security group '%s' not found")
+            print("Security group '%s' not found" % group_id, file=sys.stderr)
             return 1
 
         svc_index = make_index(operator, services, group)
