@@ -1,26 +1,11 @@
+import argparse
 import http.client
+import json
 import sys
 from typing import Sequence
 
 import boto3
 import botocore.exceptions
-
-ACCESS_KEY = '<AWS ACCESS KEY>'
-SECRET_KEY = '<AWS SECRET ACCESS KEY>'
-REGION_NAME = '<AWS REGION>'
-GROUP_ID = '<AWS GROUP ID>'
-
-OPERATOR = 'Wagner'
-SERVICES = [
-    {
-        'name': 'RDP',
-        'port': '3389-3389',
-    },
-    {
-        'name': 'HTTPS',
-        'port': '443',
-    },
-]
 
 
 def whats_my_ip():
@@ -96,45 +81,62 @@ def make_index(operator: str, services: Sequence[dict], group: dict):
     return svc_index
 
 
-def main():
-    session = boto3.session.Session(aws_access_key_id=ACCESS_KEY,
-                                    aws_secret_access_key=SECRET_KEY,
-                                    region_name=REGION_NAME)
+def main(args=sys.argv[1:]):
+    parser = argparse.ArgumentParser(description='AWS IP Liberator')
+    parser.add_argument('--config',
+                        dest='config', required=True, type=open,
+                        help='Settings in JSON format')
+
+    args = parser.parse_args(args)
+    settings = json.load(args.config)
+
+    access_key = settings['credentials']['access_key']
+    secret_key = settings['credentials']['secret_key']
+    region_name = settings['credentials']['region_name']
+
+    operator = settings['config']['operator']
+    services = settings['config']['services']
+    security_groups = settings['config']['security_groups']
+
+    session = boto3.session.Session(aws_access_key_id=access_key,
+                                    aws_secret_access_key=secret_key,
+                                    region_name=region_name)
     ec2 = session.client('ec2')
 
-    try:
-        group = ec2.describe_security_groups(GroupIds=[GROUP_ID])['SecurityGroups'][0]
-    except IndexError:
-        print("Security group '%s' not found")
-        return 1
-
-    svc_index = make_index(OPERATOR, SERVICES, group)
-
-    for desc, rule in svc_index['rules'].items():
-        # remove previous rule if exists any
-        if 'permission' in rule:
-            ec2.revoke_security_group_ingress(
-                GroupId=GROUP_ID,
-                IpPermissions=[rule['permission']]
-            )
-
-        # permission to set new IP
-        ip = rule['service'].get('ip') or whats_my_ip()
-        ports = rule['service']['port']
-        permission = make_rule(desc, ip, from_port=ports[0], to_port=ports[1])
-
+    for group_id in security_groups:
         try:
-            ec2.authorize_security_group_ingress(
-                GroupId=GROUP_ID,
-                IpPermissions=[permission]
-            )
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] == 'InvalidPermission.Duplicate':
-                print("Rule '%s' not set: permission using IP %s already exists" % (desc, ip))
+            group = ec2.describe_security_groups(GroupIds=[group_id])['SecurityGroups'][0]
+        except IndexError:
+            print("Security group '%s' not found")
+            return 1
+
+        svc_index = make_index(operator, services, group)
+
+        for desc, rule in svc_index['rules'].items():
+            # remove previous rule if exists any
+            if 'permission' in rule:
+                ec2.revoke_security_group_ingress(
+                    GroupId=group_id,
+                    IpPermissions=[rule['permission']]
+                )
+
+            # permission to set new IP
+            ip = rule['service'].get('ip') or whats_my_ip()
+            ports = rule['service']['port']
+            permission = make_rule(desc, ip, from_port=ports[0], to_port=ports[1])
+
+            try:
+                ec2.authorize_security_group_ingress(
+                    GroupId=group_id,
+                    IpPermissions=[permission]
+                )
+            except botocore.exceptions.ClientError as e:
+                if e.response['Error']['Code'] == 'InvalidPermission.Duplicate':
+                    print("Rule '%s' not set: permission using IP %s already exists" % (desc, ip))
+                else:
+                    raise e
             else:
-                raise e
-        else:
-            print("Updated rule '%s' to IP %s" % (desc, ip))
+                print("Updated rule '%s' to IP %s" % (desc, ip))
 
     return 0
 
