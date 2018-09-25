@@ -86,9 +86,16 @@ def main(args=sys.argv[1:]):
     parser.add_argument('--profile',
                         dest='settings', required=True, type=open,
                         help='Profile settings in JSON format')
+    parser.add_argument('--my-ip',
+                        dest='my_ip', required=False, default=None,
+                        help='Use this IP instead of discover current')
 
     args = parser.parse_args(args)
     settings = json.load(args.settings)
+
+    if args.my_ip:
+        global whats_my_ip
+        whats_my_ip = lambda ip=args.my_ip: ip
 
     access_key = settings['credentials']['access_key']
     secret_key = settings['credentials']['secret_key']
