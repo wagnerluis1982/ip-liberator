@@ -72,7 +72,7 @@ def make_index(operator: str, services: Sequence[dict], group: dict):
     # following, update index from Amazon security group
     for ip_perm in group['IpPermissions']:
         for ip_range in ip_perm['IpRanges']:
-            description = ip_range['Description']
+            description = ip_range.get('Description')
             if description in svc_index['rules']:
                 svc_index['rules'][description]['permission'] = make_rule(description, ip_range['CidrIp'],
                                                                           from_port=ip_perm['FromPort'],
