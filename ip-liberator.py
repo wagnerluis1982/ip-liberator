@@ -83,12 +83,12 @@ def make_index(operator: str, services: Sequence[dict], group: dict):
 
 def main(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='AWS IP Liberator')
-    parser.add_argument('--config',
-                        dest='config', required=True, type=open,
-                        help='Settings in JSON format')
+    parser.add_argument('--profile',
+                        dest='settings', required=True, type=open,
+                        help='Profile settings in JSON format')
 
     args = parser.parse_args(args)
-    settings = json.load(args.config)
+    settings = json.load(args.settings)
 
     access_key = settings['credentials']['access_key']
     secret_key = settings['credentials']['secret_key']
