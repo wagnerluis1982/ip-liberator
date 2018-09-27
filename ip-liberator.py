@@ -2,12 +2,14 @@ import argparse
 import http.client
 import json
 import sys
+from functools import lru_cache
 from typing import Sequence
 
 import boto3
 import botocore.exceptions
 
 
+@lru_cache(maxsize=1)
 def whats_my_ip():
     conn = http.client.HTTPSConnection("checkip.amazonaws.com")
 
