@@ -23,10 +23,6 @@ def whats_my_ip():
     return None
 
 
-def has_port(rule: dict, *ports: int) -> bool:
-    return rule['FromPort'] in ports and rule['FromPort'] == rule['ToPort']
-
-
 def make_rule(description: str, cidr_ip: str,
               *, port: int = None, from_port: int = None, to_port: int = None) -> dict:
     if port is not None:
