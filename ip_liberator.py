@@ -3,7 +3,6 @@ import http.client
 import json
 import sys
 from functools import lru_cache
-from typing import Sequence
 
 import boto3
 import botocore.exceptions
@@ -21,6 +20,31 @@ def whats_my_ip():
         return "%s/32" % data.decode('utf8')
 
     return None
+
+
+def describe_rules(ec2, services: dict, config: dict):
+    group_ids = config['security_groups']
+    groups = ec2.describe_security_groups(GroupIds=group_ids)['SecurityGroups']
+
+    for group in groups:
+        group_id = group['GroupId']
+        ip_permissions = group['IpPermissions'][:]
+
+        for i in reversed(range(len(ip_permissions))):
+            ip_perm = ip_permissions[i]
+            ip_perm['IpRanges'] = [e for e in ip_perm['IpRanges']
+                                   if 'Description' in e and e['Description'] in services]
+
+            if not ip_perm['IpRanges']:
+                del ip_permissions[i]
+
+        if not ip_permissions:
+            continue
+
+        yield {
+            'GroupId': group_id,
+            'IpPermissions': ip_permissions
+        }
 
 
 def make_rule(description: str, cidr_ip: str,
@@ -44,39 +68,28 @@ def make_rule(description: str, cidr_ip: str,
     }
 
 
-def make_index(operator: str, services: Sequence[dict], group: dict):
-    # firstly, create index from user-informed parameters!
-    svc_index = {
-        'rules': {},
-    }
+def make_rules(services: dict, config: dict):
+    group_ids = config['security_groups']
 
-    for svc in services:
-        description = '%s %s' % (operator, svc['name'])
+    ip_permissions = []
+    for description, service in services.items():
+        ip = service.get('ip') or whats_my_ip()
 
-        svc = svc.copy()
-        if svc['port'].isdigit():
-            port = int(svc['port'])
-            svc['port'] = (port, port)
-        else:
-            port_range = svc['port'].split('-')
-            if len(port_range) != 2:
-                raise ValueError("Invalid port range: '%s'" % svc['port'])
-            svc['port'] = tuple(map(int, port_range))
+        port_range = service['port'].split('-')
+        if not port_range or len(port_range) > 2:
+            raise ValueError("Invalid port range: '%s'" % service['port'])
 
-        svc_index['rules'][description] = {
-            'service': svc,
+        port_range = tuple(map(int, port_range))
+        if len(port_range) == 1:
+            port_range *= 2
+
+        ip_permissions += [make_rule(description, ip, from_port=port_range[0], to_port=port_range[1])]
+
+    for gid in group_ids:
+        yield {
+            'GroupId': gid,
+            'IpPermissions': ip_permissions
         }
-
-    # following, update index from Amazon security group
-    for ip_perm in group['IpPermissions']:
-        for ip_range in ip_perm['IpRanges']:
-            description = ip_range.get('Description')
-            if description in svc_index['rules']:
-                svc_index['rules'][description]['permission'] = make_rule(description, ip_range['CidrIp'],
-                                                                          from_port=ip_perm['FromPort'],
-                                                                          to_port=ip_perm['ToPort'])
-
-    return svc_index
 
 
 def main(args=sys.argv[1:]):
@@ -99,51 +112,45 @@ def main(args=sys.argv[1:]):
     secret_key = settings['credentials']['secret_key']
     region_name = settings['credentials']['region_name']
 
-    operator = settings['config']['operator']
-    services = settings['config']['services']
-    security_groups = settings['config']['security_groups']
-
     session = boto3.session.Session(aws_access_key_id=access_key,
                                     aws_secret_access_key=secret_key,
                                     region_name=region_name)
     ec2 = session.client('ec2')
 
-    for group_id in security_groups:
-        print("Entering security group", group_id)
+    # create index of services
+    operator = settings['config']['operator']
+    services = {'%s %s' % (operator, svc['name']): svc for svc in settings['config']['services']}
 
+    # rules to revoke matching config entries
+    revoking_rules = {rule['GroupId']: rule for rule in describe_rules(ec2, services, settings['config'])}
+
+    # rules to authorize from groups and services in the config
+    liberator_rules = make_rules(services, settings['config'])
+
+    for rule_to_authorize in liberator_rules:
+        group_id = rule_to_authorize['GroupId']
+        print("Security Group:", group_id)
+
+        # revoke rules in this security group if any
+        rule_to_revoke = revoking_rules.get(group_id)
+
+        if rule_to_revoke:
+            ec2.revoke_security_group_ingress(**rule_to_revoke)
+
+            for ip_range in (r for p in rule_to_revoke['IpPermissions'] for r in p['IpRanges']):
+                print("Revoked rule '%s'" % ip_range['Description'])
+
+        # authorize rules with new ip
         try:
-            group = ec2.describe_security_groups(GroupIds=[group_id])['SecurityGroups'][0]
-        except IndexError:
-            print("Security group '%s' not found" % group_id, file=sys.stderr)
-            return 1
+            ec2.authorize_security_group_ingress(**rule_to_authorize)
 
-        svc_index = make_index(operator, services, group)
-
-        for desc, rule in svc_index['rules'].items():
-            # remove previous rule if exists any
-            if 'permission' in rule:
-                ec2.revoke_security_group_ingress(
-                    GroupId=group_id,
-                    IpPermissions=[rule['permission']]
-                )
-
-            # permission to set new IP
-            ip = rule['service'].get('ip') or whats_my_ip()
-            ports = rule['service']['port']
-            permission = make_rule(desc, ip, from_port=ports[0], to_port=ports[1])
-
-            try:
-                ec2.authorize_security_group_ingress(
-                    GroupId=group_id,
-                    IpPermissions=[permission]
-                )
-            except botocore.exceptions.ClientError as e:
-                if e.response['Error']['Code'] == 'InvalidPermission.Duplicate':
-                    print("Rule '%s' not set: permission using IP %s already exists" % (desc, ip))
-                else:
-                    raise e
+            for ip_range in (r for p in rule_to_authorize['IpPermissions'] for r in p['IpRanges']):
+                print("Authorized rule '%s' to IP %s" % (ip_range['Description'], ip_range['CidrIp']))
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] != 'InvalidPermission.Duplicate':
+                print(e)
             else:
-                print("Updated rule '%s' to IP %s" % (desc, ip))
+                raise e
 
     return 0
 
