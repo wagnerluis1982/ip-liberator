@@ -93,18 +93,15 @@ def make_rules(services: dict, config: dict):
 
 
 def revoke_rule(ec2, rule):
+    print("Revoking rules", ', '.join("'%s'" % r['Description'] for p in rule['IpPermissions'] for r in p['IpRanges']))
     ec2.revoke_security_group_ingress(**rule)
-
-    for ip_range in (r for p in rule['IpPermissions'] for r in p['IpRanges']):
-        print("Revoked rule '%s'" % ip_range['Description'])
 
 
 def authorize_rule(ec2, rule):
     try:
-        ec2.authorize_security_group_ingress(**rule)
-
         for ip_range in (r for p in rule['IpPermissions'] for r in p['IpRanges']):
-            print("Authorized rule '%s' to IP %s" % (ip_range['Description'], ip_range['CidrIp']))
+            print("Authorizing rule '%s' to IP %s" % (ip_range['Description'], ip_range['CidrIp']))
+        ec2.authorize_security_group_ingress(**rule)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] != 'InvalidPermission.Duplicate':
             print(e)
