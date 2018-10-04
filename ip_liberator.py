@@ -92,6 +92,26 @@ def make_rules(services: dict, config: dict):
         }
 
 
+def revoke_rule(ec2, rule):
+    ec2.revoke_security_group_ingress(**rule)
+
+    for ip_range in (r for p in rule['IpPermissions'] for r in p['IpRanges']):
+        print("Revoked rule '%s'" % ip_range['Description'])
+
+
+def authorize_rule(ec2, rule):
+    try:
+        ec2.authorize_security_group_ingress(**rule)
+
+        for ip_range in (r for p in rule['IpPermissions'] for r in p['IpRanges']):
+            print("Authorized rule '%s' to IP %s" % (ip_range['Description'], ip_range['CidrIp']))
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] != 'InvalidPermission.Duplicate':
+            print(e)
+        else:
+            raise e
+
+
 def main(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='AWS IP Liberator')
     parser.add_argument('--profile',
@@ -139,26 +159,14 @@ def main(args=sys.argv[1:]):
         rule_to_revoke = revoking_rules.get(group_id)
 
         if rule_to_revoke:
-            ec2.revoke_security_group_ingress(**rule_to_revoke)
-
-            for ip_range in (r for p in rule_to_revoke['IpPermissions'] for r in p['IpRanges']):
-                print("Revoked rule '%s'" % ip_range['Description'])
+            revoke_rule(ec2, rule_to_revoke)
 
         # don't authorize
         if revoke_only:
             continue
 
         # authorize rules with new ip
-        try:
-            ec2.authorize_security_group_ingress(**rule_to_authorize)
-
-            for ip_range in (r for p in rule_to_authorize['IpPermissions'] for r in p['IpRanges']):
-                print("Authorized rule '%s' to IP %s" % (ip_range['Description'], ip_range['CidrIp']))
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] != 'InvalidPermission.Duplicate':
-                print(e)
-            else:
-                raise e
+        authorize_rule(ec2, rule_to_authorize)
 
     return 0
 
