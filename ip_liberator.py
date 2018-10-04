@@ -100,9 +100,13 @@ def main(args=sys.argv[1:]):
     parser.add_argument('--my-ip',
                         dest='my_ip', required=False, default=None,
                         help='Use this IP instead of discover current')
+    parser.add_argument('--revoke-only',
+                        dest='revoke_only', action='store_true',
+                        help='Only revoke the rules specified in the config')
 
     args = parser.parse_args(args)
     settings = json.load(args.settings)
+    revoke_only = args.revoke_only
 
     if args.my_ip:
         global whats_my_ip
@@ -139,6 +143,10 @@ def main(args=sys.argv[1:]):
 
             for ip_range in (r for p in rule_to_revoke['IpPermissions'] for r in p['IpRanges']):
                 print("Revoked rule '%s'" % ip_range['Description'])
+
+        # don't authorize
+        if revoke_only:
+            continue
 
         # authorize rules with new ip
         try:
