@@ -103,7 +103,7 @@ def authorize_rule(ec2, rule):
             print("Authorizing rule '%s' to IP %s" % (ip_range['Description'], ip_range['CidrIp']))
         ec2.authorize_security_group_ingress(**rule)
     except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] != 'InvalidPermission.Duplicate':
+        if e.response['Error']['Code'] == 'InvalidPermission.Duplicate':
             print(e)
         else:
             raise e
