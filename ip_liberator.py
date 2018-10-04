@@ -146,7 +146,18 @@ def main(args=sys.argv[1:]):
     services = {'%s %s' % (operator, svc['name']): svc for svc in settings['config']['services']}
 
     # rules to revoke matching config entries
-    revoking_rules = {rule['GroupId']: rule for rule in describe_rules(ec2, services, settings['config'])}
+    revoking_rules = describe_rules(ec2, services, settings['config'])
+
+    # don't authorize
+    if revoke_only:
+        for rule_to_revoke in revoking_rules:
+            print("Security Group:", rule_to_revoke['GroupId'])
+            revoke_rule(ec2, rule_to_revoke)
+
+        return 0
+
+    # when authorizing, make a index of the revoking rules
+    revoking_rules = {rule['GroupId']: rule for rule in revoking_rules}
 
     # rules to authorize from groups and services in the config
     liberator_rules = make_rules(services, settings['config'])
@@ -160,10 +171,6 @@ def main(args=sys.argv[1:]):
 
         if rule_to_revoke:
             revoke_rule(ec2, rule_to_revoke)
-
-        # don't authorize
-        if revoke_only:
-            continue
 
         # authorize rules with new ip
         authorize_rule(ec2, rule_to_authorize)
