@@ -93,14 +93,11 @@ def make_rules(services: dict, config: dict):
 
 
 def revoke_rule(ec2, rule):
-    print("Revoking rules", ', '.join("'%s'" % r['Description'] for p in rule['IpPermissions'] for r in p['IpRanges']))
     ec2.revoke_security_group_ingress(**rule)
 
 
 def authorize_rule(ec2, rule):
     try:
-        for ip_range in (r for p in rule['IpPermissions'] for r in p['IpRanges']):
-            print("Authorizing rule '%s' to IP %s" % (ip_range['Description'], ip_range['CidrIp']))
         ec2.authorize_security_group_ingress(**rule)
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == 'InvalidPermission.Duplicate':
@@ -147,8 +144,9 @@ def main(args=sys.argv[1:]):
 
     # don't authorize
     if revoke_only:
+        print("Revoking rules", [svc for svc in services])
         for rule_to_revoke in revoking_rules:
-            print("Security Group:", rule_to_revoke['GroupId'])
+            print('-', rule_to_revoke['GroupId'])
             revoke_rule(ec2, rule_to_revoke)
 
         return 0
@@ -159,9 +157,21 @@ def main(args=sys.argv[1:]):
     # rules to authorize from groups and services in the config
     liberator_rules = make_rules(services, settings['config'])
 
-    for rule_to_authorize in liberator_rules:
+    # use first rule to print ip addresses
+    rule_to_authorize = next(liberator_rules)
+    ip_addresses = set(ip_range['CidrIp']
+                       for ip_permission in rule_to_authorize['IpPermissions']
+                       for ip_range in ip_permission['IpRanges'])
+
+    if len(ip_addresses) == 1:
+        print("Authorizing rules", [svc for svc in services], "to IP", ip_addresses.pop())
+    else:
+        for ip_range in (r for p in rule_to_authorize['IpPermissions'] for r in p['IpRanges']):
+            print("Authorizing rule '%s' to IP %s" % (ip_range['Description'], ip_range['CidrIp']))
+
+    while True:
         group_id = rule_to_authorize['GroupId']
-        print("Security Group:", group_id)
+        print('-', group_id)
 
         # revoke rules in this security group if any
         rule_to_revoke = revoking_rules.get(group_id)
@@ -171,6 +181,11 @@ def main(args=sys.argv[1:]):
 
         # authorize rules with new ip
         authorize_rule(ec2, rule_to_authorize)
+
+        try:
+            rule_to_authorize = next(liberator_rules)
+        except StopIteration:
+            break
 
     return 0
 
