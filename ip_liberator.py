@@ -22,6 +22,22 @@ def whats_my_ip():
     return None
 
 
+def duplicate_removal(rule1, rule2):
+    def mk_keys(rule):
+        return {(ip_permission['FromPort'], ip_permission['ToPort'], ip_range['Description'], ip_range['CidrIp']): i
+                for i, ip_permission in enumerate(rule['IpPermissions'])
+                for ip_range in ip_permission['IpRanges']}
+
+    rule_keys1 = mk_keys(rule1)
+    rule_keys2 = mk_keys(rule2)
+
+    indexes = [(rule_keys1[key], rule_keys2[key]) for key in rule_keys2 if key in rule_keys1]
+
+    for i, j in indexes:
+        del rule1['IpPermissions'][i]
+        del rule2['IpPermissions'][j]
+
+
 def describe_rules(ec2, services: dict, config: dict):
     group_ids = config['security_groups']
     groups = ec2.describe_security_groups(GroupIds=group_ids)['SecurityGroups']
@@ -88,7 +104,7 @@ def make_rules(services: dict, config: dict):
     for gid in group_ids:
         yield {
             'GroupId': gid,
-            'IpPermissions': ip_permissions
+            'IpPermissions': ip_permissions[:]
         }
 
 
@@ -177,10 +193,14 @@ def main(args=sys.argv[1:]):
         rule_to_revoke = revoking_rules.get(group_id)
 
         if rule_to_revoke:
-            revoke_rule(ec2, rule_to_revoke)
+            duplicate_removal(rule_to_authorize, rule_to_revoke)
+
+            if rule_to_revoke['IpPermissions']:
+                revoke_rule(ec2, rule_to_revoke)
 
         # authorize rules with new ip
-        authorize_rule(ec2, rule_to_authorize)
+        if rule_to_authorize['IpPermissions']:
+            authorize_rule(ec2, rule_to_authorize)
 
         try:
             rule_to_authorize = next(liberator_rules)
