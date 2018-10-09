@@ -113,11 +113,25 @@ def revoke_rule(ec2, rule):
 
 
 def authorize_rule(ec2, rule):
+    # rule authorization
     try:
         ec2.authorize_security_group_ingress(**rule)
+    # in case of problems to authorize
     except botocore.exceptions.ClientError as e:
+        # when a permission is duplicated
         if e.response['Error']['Code'] == 'InvalidPermission.Duplicate':
-            print(e)
+            ip_permissions = rule['IpPermissions']
+
+            # single duplicated permission: results in a warning
+            if len(ip_permissions) == 1:
+                description, ip = (ip_permissions[0]['IpRanges'][0][k]
+                                   for k in ('Description', 'CidrIp'))
+                print("> Rule '%s' not set: permission with IP %s already exists" % (description, ip))
+            # several permissions: retry authorize permission by permission
+            else:
+                for ip_perm in ip_permissions:
+                    authorize_rule(ec2, {'GroupId': rule['GroupId'],
+                                         'IpPermissions': [ip_perm]})
         else:
             raise e
 
