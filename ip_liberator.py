@@ -32,6 +32,8 @@ def duplicate_removal(rule1, rule2):
     rule_keys2 = mk_keys(rule2)
 
     indexes = [(rule_keys1[key], rule_keys2[key]) for key in rule_keys2 if key in rule_keys1]
+    indexes = zip(sorted([t[0] for t in indexes], reverse=True),
+                  sorted([t[1] for t in indexes], reverse=True))
 
     for i, j in indexes:
         del rule1['IpPermissions'][i]
