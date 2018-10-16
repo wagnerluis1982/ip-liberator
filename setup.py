@@ -9,7 +9,7 @@ with codecs.open("README.md", 'r', encoding='utf-8') as readme_file:
 
 setup(
     name="ip-liberator",
-    version="0.1.1.dev0",
+    version="0.1.1",
     author="Wagner Macedo",
     author_email="wagnerluis1982@gmail.com",
     description="Command line script to update AWS Security Groups rules",
