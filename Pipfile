@@ -10,7 +10,11 @@ python_version = "3.6"
 "boto3" = "== 1.7.*"
 
 [dev-packages]
+bumpversion = "*"
+pytest = "*"
 pylint = "*"
-ipython = "*"
 rope = "*"
-"autopep8" = "*"
+flake8 = "*"
+sphinx = "*"
+tox = "*"
+ipython = "*"

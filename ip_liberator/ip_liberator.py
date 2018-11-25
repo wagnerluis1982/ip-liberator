@@ -1,3 +1,5 @@
+"""Main module."""
+
 import argparse
 import http.client
 import json
