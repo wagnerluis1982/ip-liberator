@@ -1,25 +1,31 @@
 """Main module."""
 
 import argparse
-import http.client
 import json
 import sys
-from functools import lru_cache
+import urllib.request
 
 import boto3
 import botocore.exceptions
 
 
-@lru_cache(maxsize=1)
-def whats_my_ip():
-    conn = http.client.HTTPSConnection("checkip.amazonaws.com")
+def whats_my_ip(my_ip: str = None) -> str:
+    # change cached value and return
+    if my_ip:
+        whats_my_ip.cache = my_ip
+        return my_ip
 
-    conn.request('GET', '/')
-    response = conn.getresponse()
+    # try to return cached value
+    try:
+        return whats_my_ip.cache
+    except AttributeError:
+        pass
 
-    if response.status == 200:
-        data = response.read().strip()
-        return "%s/32" % data.decode('utf8')
+    with urllib.request.urlopen("https://checkip.amazonaws.com/") as response:
+        if response.status == 200:
+            data = response.read().strip()
+            my_ip = "%s/32" % data.decode()
+            return whats_my_ip(my_ip)
 
     return None
 
@@ -154,8 +160,6 @@ class AwsIpLiberator:
             }
 
 
-
-
 def main(args=sys.argv[1:]):
     parser = argparse.ArgumentParser(description='AWS IP Liberator')
     parser.add_argument('--profile',
@@ -173,8 +177,7 @@ def main(args=sys.argv[1:]):
     revoke_only = args.revoke_only
 
     if args.my_ip:
-        global whats_my_ip
-        whats_my_ip = lambda ip=args.my_ip: ip
+        whats_my_ip(args.my_ip)
 
     access_key = settings['credentials']['access_key']
     secret_key = settings['credentials']['secret_key']
