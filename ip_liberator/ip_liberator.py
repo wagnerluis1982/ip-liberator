@@ -77,8 +77,8 @@ class AwsIpLiberator:
             }
 
 
-def main(args=sys.argv[1:]):
-    parser = argparse.ArgumentParser(description='AWS IP Liberator')
+def main(program=sys.argv[0], args=sys.argv[1:]):
+    parser = argparse.ArgumentParser(prog=program, description='AWS IP Liberator')
     parser.add_argument('--profile',
                         dest='settings', required=True, type=open,
                         help='Profile settings in JSON format')
