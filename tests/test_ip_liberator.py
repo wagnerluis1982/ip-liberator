@@ -102,30 +102,31 @@ class TestAwsIpLiberator:
 
     def test_describe_rules(self):
         # given
-        group_id = 'sg-1'
+        group_ids = ['sg-1', 'sg-2']
         services = ('SSH', 'HTTP')
-        ip_ranges = [{'Description': svc} for svc in services]
+        wanted = [{'Description': svc} for svc in services]
 
         # given
-        def describe_rules_return(data: list) -> dict:
+        def describe_rules_return(group_id: str, data: list) -> dict:
             return {'GroupId': group_id, 'IpPermissions': [{'IpRanges': data}]}
 
         # given
-        def describe_aws_return(data: list) -> dict:
-            return {'SecurityGroups': [describe_rules_return(data)]}
+        unwanted = [{'Description': svc + '1'} for svc in services]
+        aws_return = {'SecurityGroups': [describe_rules_return(group_ids[0], wanted),     # first is kept
+                                         describe_rules_return(group_ids[1], unwanted)]}  # last is removed (unwanted)
 
         # given
         mock_ec2 = self.liberator.ec2
-        mock_ec2.describe_security_groups.return_value = describe_aws_return(ip_ranges)
+        mock_ec2.describe_security_groups.return_value = aws_return
 
         # when
-        rules = self.liberator.describe_rules(services, {'security_groups': [group_id]})
+        rules = self.liberator.describe_rules(services, {'security_groups': group_ids})
 
         # then
         assert isinstance(rules, typing.Iterator)
 
         # then
-        assert next(rules) == describe_rules_return(ip_ranges)
+        assert next(rules) == describe_rules_return(group_ids[0], wanted)
 
         # then
         with pytest.raises(StopIteration):
