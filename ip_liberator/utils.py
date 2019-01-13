@@ -70,10 +70,14 @@ def make_rules(services: dict, config: dict) -> Iterator[dict]:
     ip_permissions = []
     for description, service in services.items():
         ip = service.get('ip') or whats_my_ip()
+        port_spec = service['port'].strip()
 
-        port_range = service['port'].split('-')
-        if not port_range or len(port_range) > 2:
-            raise ValueError("Invalid port range: '%s'" % service['port'])
+        if not port_spec:
+            raise ValueError("No port range informed in service: %s" % description)
+
+        port_range = port_spec.split('-')
+        if len(port_range) > 2:
+            raise ValueError("Invalid port range: '%s'" % port_spec)
 
         port_range = tuple(map(int, port_range))
         if len(port_range) == 1:
