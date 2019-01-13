@@ -103,3 +103,19 @@ def test_make_rules(mock_ip):
     assert isinstance(rules, typing.Iterator)
     assert next(rules) == expected
     with pytest.raises(StopIteration): next(rules)
+
+
+@unittest.mock.patch('ip_liberator.utils.whats_my_ip')
+def test_make_rules__invalid_port_range(mock_ip):
+    mock_ip.return_value = '10.0.0.1/32'
+
+    ports_input = [
+        "1-2-3"
+    ]
+
+    for port in ports_input:
+        rules = make_rules(config={"security_groups": ["sg-1"]},
+                           services={"SVC": {"port": port}})
+
+        with pytest.raises(ValueError, match="Invalid port range: '%s'" % port):
+            next(rules)
