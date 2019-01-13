@@ -8,10 +8,12 @@ python_version = "3.6"
 
 [packages]
 "boto3" = "== 1.7.*"
+pytest-cov = "*"
 
 [dev-packages]
 bumpversion = "*"
 pytest = "*"
+coverage = "*"
 pylint = "*"
 rope = "*"
 flake8 = "*"
