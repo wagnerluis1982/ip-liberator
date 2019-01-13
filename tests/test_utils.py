@@ -5,6 +5,8 @@
 import typing
 import unittest.mock
 
+import pytest
+
 from ip_liberator.utils import whats_my_ip, make_keys, duplicate_removal, make_rule, make_rules
 
 
@@ -100,3 +102,4 @@ def test_make_rules(mock_ip):
 
     assert isinstance(rules, typing.Iterator)
     assert next(rules) == expected
+    with pytest.raises(StopIteration): next(rules)
