@@ -1,3 +1,4 @@
+import re
 import urllib.request
 
 from typing import Optional, Iterator
@@ -64,6 +65,9 @@ def make_rule(description: str, cidr_ip: str,
     }
 
 
+RE_PORT_RANGE = re.compile(r"^[0-9]+(-[0-9]+)?$")
+
+
 def make_rules(services: dict, config: dict) -> Iterator[dict]:
     group_ids = config['security_groups']
 
@@ -75,11 +79,10 @@ def make_rules(services: dict, config: dict) -> Iterator[dict]:
         if not port_spec:
             raise ValueError("No port range informed in service: %s" % description)
 
-        port_range = port_spec.split('-')
-        if len(port_range) > 2:
+        if not RE_PORT_RANGE.match(port_spec):
             raise ValueError("Invalid port range: '%s'" % port_spec)
 
-        port_range = tuple(map(int, port_range))
+        port_range = tuple(map(int, port_spec.split('-')))
         if len(port_range) == 1:
             port_range *= 2
 

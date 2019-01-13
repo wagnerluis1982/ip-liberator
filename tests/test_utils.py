@@ -129,7 +129,11 @@ def test_make_rules__invalid_port_range(mock_ip):
     mock_ip.return_value = '10.0.0.1/32'
 
     ports_input = [
-        "1-2-3"
+        "1-2-3",
+        "100-",
+        "-100",
+        "abc",
+        "1 2 3",
     ]
 
     for port in ports_input:
