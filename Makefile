@@ -60,10 +60,11 @@ test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source ip_liberator -m pytest
-	coverage report -m
+	pytest --cov
 	coverage html
+ifndef NO_BROWSER
 	$(BROWSER) htmlcov/index.html
+endif
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/ip_liberator.rst
