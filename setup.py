@@ -28,7 +28,7 @@ setup(
     py_modules = ['ip_liberator'],
     entry_points={
         'console_scripts': [
-            'ip-liberator = ip_liberator.ip_liberator:main'
+            'ip-liberator = ip_liberator.__main__:main'
         ],
     },
     install_requires=requirements,
