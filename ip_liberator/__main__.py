@@ -32,8 +32,7 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
     liberator = AwsIpLiberator(access_key, secret_key, region_name)
 
     # create index of services
-    operator = settings['config']['operator']
-    services = {'%s %s' % (operator, svc['name']): svc for svc in settings['config']['services']}
+    services = make_services_index(settings)
 
     # rules to revoke matching config entries
     revoking_rules = liberator.describe_rules(services, settings['config'])
@@ -88,3 +87,8 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
             break
 
     return 0
+
+
+def make_services_index(settings):
+    operator = settings['config']['operator']
+    return {'%s %s' % (operator, svc['name']): svc for svc in settings['config']['services']}
