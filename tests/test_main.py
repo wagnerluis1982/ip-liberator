@@ -53,6 +53,21 @@ class TestMain:
         mock_liberator.describe_rules.assert_called_once_with(index, settings['config'])
         mock_liberator.authorize_rule.assert_called_once_with(rule)
 
+    @mock.patch('ip_liberator.__main__.whats_my_ip')
+    def test_main__my_ip(self, mock_whats_my_ip, *_):
+        # given
+        with os.fdopen(self.fd, mode='w') as file:
+            json.dump(make_settings(), file)
+
+        # given
+        my_ip = "1.2.3.4/32"
+
+        # when
+        main(args=["--profile", self.filename, "--my-ip", my_ip])
+
+        # then
+        mock_whats_my_ip.assert_called_once_with(my_ip)
+
 
 def make_settings(access_key: str = None, secret_key: str = None, region_name: str = None,
                   operator: str = None, services: list = None, security_groups: list = None):
