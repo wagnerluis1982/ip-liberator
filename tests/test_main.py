@@ -94,6 +94,37 @@ class TestMain:
         # then
         mock_whats_my_ip.assert_called_once_with(my_ip)
 
+    def test_main__ip_informed_at_service(self, mock_print, mock_aws_class):
+        # given
+        group_id = "sg-1"
+        informed_ip = "1.2.3.4/32"
+        operator = "Peter"
+        services = [{"name": "HTTP", "port": "80"},
+                    {"name": "SFTP", "port": "22", "ip": informed_ip}]
+
+        # given
+        descriptions = ["%s %s" % (operator, svc["name"]) for svc in services]
+        settings = make_settings(operator=operator, services=services, security_groups=[group_id])
+        services_index = make_services_index(settings)
+        rule = next(make_rules(services_index, settings['config']))
+
+        # given
+        with os.fdopen(self.fd, mode='w') as file:
+            json.dump(settings, file)
+
+        # when
+        main(args=["--profile", self.filename])
+
+        # then
+        mock_print.assert_has_calls([mock.call("Authorizing rule '%s' to IP %s" % (descriptions[0], IP)),
+                                     mock.call("Authorizing rule '%s' to IP %s" % (descriptions[1], informed_ip)),
+                                     mock.call('-', group_id)])
+
+        # then
+        mock_liberator = mock_aws_class.return_value
+        mock_liberator.describe_rules.assert_called_once_with(services_index, settings['config'])
+        mock_liberator.authorize_rule.assert_called_once_with(rule)
+
 
 def make_settings(access_key: str = None, secret_key: str = None, region_name: str = None,
                   operator: str = None, services: list = None, security_groups: list = None):
