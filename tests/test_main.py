@@ -53,6 +53,32 @@ class TestMain:
         mock_liberator.describe_rules.assert_called_once_with(index, settings['config'])
         mock_liberator.authorize_rule.assert_called_once_with(rule)
 
+    def test_main__revoke_only(self, mock_print, mock_aws_class):
+        # given
+        group_id = "sg-1"
+        rule_to_revoke = {'GroupId': group_id}
+        settings = make_settings(security_groups=[group_id])
+        index = make_services_index(settings)
+
+        # given
+        with os.fdopen(self.fd, mode='w') as file:
+            json.dump(settings, file)
+
+        # given
+        mock_liberator = mock_aws_class.return_value
+        mock_liberator.describe_rules.return_value = [rule_to_revoke]
+
+        # when
+        main(args=["--profile", self.filename, "--revoke-only"])
+
+        # then
+        mock_print.assert_has_calls([mock.call("Revoking rules", [svc for svc in index]),
+                                     mock.call('-', group_id)])
+
+        # then
+        mock_liberator.describe_rules.assert_called_once_with(index, settings['config'])
+        mock_liberator.revoke_rule.assert_called_once_with(rule_to_revoke)
+
     @mock.patch('ip_liberator.__main__.whats_my_ip')
     def test_main__my_ip(self, mock_whats_my_ip, *_):
         # given
