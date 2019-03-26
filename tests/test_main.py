@@ -7,7 +7,7 @@ import tempfile
 from unittest import mock
 
 from ip_liberator.__main__ import main, make_services_index
-from ip_liberator.utils import make_rules
+from ip_liberator.utils import make_rules, make_rule
 
 IP = '127.0.0.1/8'
 
@@ -77,6 +77,40 @@ class TestMain:
 
         # then
         mock_liberator.describe_rules.assert_called_once_with(index, settings['config'])
+        mock_liberator.revoke_rule.assert_called_once_with(rule_to_revoke)
+
+    def test_main__duplicate_rule(self, mock_print, mock_aws_class):
+        # given
+        group_id = "sg-1"
+        rule_to_revoke = {'GroupId': group_id,
+                          'IpPermissions': [make_rule('Monty Python', IP, port=1),
+                                            make_rule('Monty Second', IP, port=2),
+                                            make_rule('Monty ToNone', IP, port=3)]}
+        settings = make_settings(security_groups=[group_id],
+                                 operator='Monty',
+                                 services=[{"name": "Python", "port": "1"},
+                                           {"name": "IsCool", "port": "4"}])
+        index = make_services_index(settings)
+
+        # given
+        with os.fdopen(self.fd, mode='w') as file:
+            json.dump(settings, file)
+
+        # given
+        mock_liberator = mock_aws_class.return_value
+        mock_liberator.describe_rules.return_value = [rule_to_revoke]
+
+        # when
+        main(args=["--profile", self.filename])
+
+        # then
+        mock_print.assert_has_calls([mock.call("Authorizing rules", [svc for svc in index], "to IP", IP),
+                                     mock.call('-', group_id)])
+
+        # then
+        mock_liberator.describe_rules.assert_called_once_with(index, settings['config'])
+        mock_liberator.authorize_rule.assert_called_once_with({'GroupId': group_id,
+                                                               'IpPermissions': [make_rule('Monty IsCool', IP, port=4)]})
         mock_liberator.revoke_rule.assert_called_once_with(rule_to_revoke)
 
     @mock.patch('ip_liberator.__main__.whats_my_ip')
