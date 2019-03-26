@@ -8,9 +8,15 @@ python_version = "3.6"
 
 [packages]
 "boto3" = "== 1.7.*"
+pytest-cov = "*"
 
 [dev-packages]
+bumpversion = "*"
+pytest = "*"
+coverage = "*"
 pylint = "*"
-ipython = "*"
 rope = "*"
-"autopep8" = "*"
+flake8 = "*"
+sphinx = "*"
+tox = "*"
+ipython = "*"

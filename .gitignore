@@ -83,6 +83,8 @@ celerybeat-schedule
 
 # Environments
 .env
+
+# virtualenv
 .venv
 env/
 venv/
@@ -96,6 +98,12 @@ venv.bak/
 
 # Rope project settings
 .ropeproject
+
+# JetBrains project settings
+.idea/
+
+# VS Code project settings
+.vscode
 
 # mkdocs documentation
 /site
