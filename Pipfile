@@ -7,12 +7,12 @@ name = "pypi"
 python_version = "3.6"
 
 [packages]
-"boto3" = "== 1.7.*"
-pytest-cov = "*"
+"boto3" = "== 1.9.133"
 
 [dev-packages]
 bumpversion = "*"
 pytest = "*"
+pytest-cov = "*"
 coverage = "*"
 pylint = "*"
 rope = "*"
