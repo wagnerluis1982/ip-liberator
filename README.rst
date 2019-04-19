@@ -13,10 +13,6 @@ IP Liberator
         :target: https://ip-liberator.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-.. image:: https://pyup.io/repos/github/wagnerluis1982/ip-liberator/shield.svg
-     :target: https://pyup.io/repos/github/wagnerluis1982/ip-liberator/
-     :alt: Updates
-
 
 A command line utility to update AWS Security Groups rules.
 
