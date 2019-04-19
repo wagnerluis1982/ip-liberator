@@ -69,7 +69,7 @@ endif
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/ip_liberator.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ ip_liberator
+	#sphinx-apidoc -o docs/ ip_liberator
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
