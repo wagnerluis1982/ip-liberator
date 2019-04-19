@@ -46,3 +46,6 @@ To accomplish it, simply run:
 .. code-block:: console
 
     $ ip-liberator --profile /path/my-profile.json
+    Authorizing rules ['John FTP+SSH', 'John HTTPS'] to IP 192.30.253.112/32
+    - sg-<GROUP_ID_1>
+    - sg-<GROUP_ID_2>
