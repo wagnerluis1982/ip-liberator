@@ -1,4 +1,4 @@
-"""Top-level package for IP Liberator."""
+"""A command line utility to update AWS Security Groups rules."""
 
 __author__ = """Wagner Macedo"""
 __email__ = 'wagnerluis1982@gmail.com'
