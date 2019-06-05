@@ -4,6 +4,30 @@ version = "0.2.2.dev0"
 description = "A command line utility to update AWS Security Groups rules."
 authors = ["Wagner Macedo <wagnerluis1982@gmail.com>"]
 license = "GPL-3.0"
+readme = "README.rst"
+repository = "https://github.com/wagnerluis1982/ip-liberator"
+documentation = "https://ip-liberator.readthedocs.io"
+keywords= ["ip-liberator", "Python", "Amazon AWS", "cloud computing", "DevOps"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Utilities",
+]
+include = [
+    "AUTHORS.rst",
+    "CONTRIBUTING.rst",
+    "HISTORY.rst",
+    "docs/*",
+    "**/Makefile",
+    "**/conf.py",
+]
+
+[tool.poetry.scripts]
+ip-liberator = 'ip_liberator.__main__:main'
 
 [tool.poetry.dependencies]
 python = "^3.6"
