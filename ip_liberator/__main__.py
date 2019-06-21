@@ -11,6 +11,9 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
     parser.add_argument('--profile',
                         dest='settings', required=True, type=open,
                         help='Profile settings in JSON format')
+    parser.add_argument('--operator',
+                        dest='operator', required=False, default=None,
+                        help='Override the operator informed in the config')
     parser.add_argument('--my-ip',
                         dest='my_ip', required=False, default=None,
                         help='Use this IP instead of discover current')
@@ -24,6 +27,9 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
 
     if args.my_ip:
         whats_my_ip(args.my_ip)
+
+    if args.operator:
+        settings['config']['operator'] = args.operator
 
     access_key = settings['credentials']['access_key']
     secret_key = settings['credentials']['secret_key']
