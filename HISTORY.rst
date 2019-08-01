@@ -10,8 +10,24 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 0.2.2 (Unreleased)
 ------------------
 
-- Add option ``--operator``
+This release marks a breaking change. Now the script "tags" recorded entries in
+the security groups, e.g. ``[ip-liberator] SSH John`` instead of only ``SSH John``.
+That helps to identify what IP Liberator added and what was added by hand.
+
+By default, the tag is **ip-liberator**, but can be change through the new
+option ``--tag``. If the user wants the previous behavior, i.e. without a tag,
+he or she must pass the option ``--no-tag``.
+
+Added
++++++
+
+- Add option ``--operator`` to change the profile operator.
 - Add short option ``-p`` for ``--profile``
+
+Changed
++++++++
+
+- Add option ``--tag`` to identify entries added by the script.
 - Migrate build system to Poetry
 
 0.2.1 (2019-04-19)

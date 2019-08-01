@@ -14,18 +14,19 @@ class AwsIpLiberator:
     :param region_name: AWS region name
     """
 
-    def __init__(self, access_key: str, secret_key: str, region_name: str):
+    def __init__(self, access_key: str, secret_key: str, region_name: str, my_tag: str = None):
         session = boto3.session.Session(
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
             region_name=region_name
         )
         self.ec2 = session.client('ec2')
+        self.my_tag = my_tag
 
     def authorize_rule(self, rule: dict):
         # rule authorization
         try:
-            self.ec2.authorize_security_group_ingress(**rule)
+            self.ec2.authorize_security_group_ingress(**self.tagged_rule(rule))
         # in case of problems to authorize
         except botocore.exceptions.ClientError as e:
             # when a permission is duplicated
@@ -71,3 +72,24 @@ class AwsIpLiberator:
                 'GroupId': group_id,
                 'IpPermissions': ip_permissions
             }
+
+    def tagged_rule(self, rule: dict) -> dict:
+        if not self.my_tag:
+            return rule
+
+        return {
+            'IpPermissions': [
+                {
+                    'IpRanges': [
+                        {
+                            **ip_range,
+                            'Description': self.tag_description(ip_range['Description'])
+                        }
+                        for ip_range in ip_permission['IpRanges']]
+                }
+                for ip_permission in rule['IpPermissions']
+            ]
+        }
+
+    def tag_description(self, description: str):
+        return description if not self.my_tag else '[%s] %s' % (self.my_tag, description)

@@ -48,7 +48,7 @@ class TestMain:
                                      mock.call('-', security_groups[0])])
 
         # then
-        mock_aws_class.assert_called_once_with(access_key, secret_key, region_name)
+        mock_aws_class.assert_called_once_with(access_key, secret_key, region_name, my_tag='ip-liberator')
         mock_liberator = mock_aws_class.return_value
         mock_liberator.describe_rules.assert_called_once_with(index, settings['config'])
         mock_liberator.authorize_rule.assert_called_once_with(rule)
