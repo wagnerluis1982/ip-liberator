@@ -1,15 +1,16 @@
 import argparse
 import json
 import sys
+import os.path
 
 from .ip_liberator import AwsIpLiberator
 from .utils import whats_my_ip, make_rules, duplicate_removal
 
 
 def main(program=sys.argv[0], args=sys.argv[1:]):
-    parser = argparse.ArgumentParser(prog=program, description='AWS IP Liberator')
+    parser = argparse.ArgumentParser(prog=os.path.basename(program), description='AWS IP Liberator')
     parser.add_argument('-p', '--profile',
-                        dest='settings', required=True, type=open,
+                        dest='settings', required=True, type=open, metavar='FILE',
                         help='Profile settings in JSON format')
     parser.add_argument('--operator',
                         dest='operator', required=False, default=None,
