@@ -8,7 +8,7 @@ from .utils import whats_my_ip, make_rules, duplicate_removal
 
 def main(program=sys.argv[0], args=sys.argv[1:]):
     parser = argparse.ArgumentParser(prog=program, description='AWS IP Liberator')
-    parser.add_argument('--profile',
+    parser.add_argument('-p', '--profile',
                         dest='settings', required=True, type=open,
                         help='Profile settings in JSON format')
     parser.add_argument('--operator',

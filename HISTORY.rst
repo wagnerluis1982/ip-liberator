@@ -11,6 +11,7 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 ------------------
 
 - Add option ``--operator``
+- Add short option ``-p`` for ``--profile``
 - Migrate build system to Poetry
 
 0.2.1 (2019-04-19)
