@@ -14,14 +14,14 @@ class AwsIpLiberator:
     :param region_name: AWS region name
     """
 
-    def __init__(self, access_key: str, secret_key: str, region_name: str, my_tag: str = None):
+    def __init__(self, access_key: str, secret_key: str, region_name: str, tag: str = None):
         session = boto3.session.Session(
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
             region_name=region_name
         )
         self.ec2 = session.client('ec2')
-        self.my_tag = my_tag
+        self.tag = tag
 
     def authorize_rule(self, rule: dict):
         # rule authorization
@@ -47,7 +47,7 @@ class AwsIpLiberator:
                 raise e
 
     def revoke_rule(self, rule: dict):
-        self.ec2.revoke_security_group_ingress(**rule)
+        self.ec2.revoke_security_group_ingress(**self.tagged_rule(rule))
 
     def describe_rules(self, services: Container[str], config: dict):
         group_ids = config['security_groups']
@@ -74,12 +74,14 @@ class AwsIpLiberator:
             }
 
     def tagged_rule(self, rule: dict) -> dict:
-        if not self.my_tag:
+        if not self.tag:
             return rule
 
-        return {
+        new_rule = {
+            **rule,
             'IpPermissions': [
                 {
+                    **ip_permission,
                     'IpRanges': [
                         {
                             **ip_range,
@@ -90,6 +92,7 @@ class AwsIpLiberator:
                 for ip_permission in rule['IpPermissions']
             ]
         }
+        return new_rule
 
     def tag_description(self, description: str):
-        return description if not self.my_tag else '[%s] %s' % (self.my_tag, description)
+        return description if not self.tag else '[%s] %s' % (self.tag, description)

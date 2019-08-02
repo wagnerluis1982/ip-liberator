@@ -19,7 +19,7 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
                         dest='my_ip', required=False, default=None,
                         help='Use this IP instead of discover current')
     parser.add_argument('-t', '--tag',
-                        dest='my_tag', default='ip-liberator',
+                        dest='tag', default='ip-liberator',
                         help='Help to identify entries added by IP Liberator on security group (default: %(default)s)')
     parser.add_argument('--no-tag', dest='tag', action='store_const', const=None, help=argparse.SUPPRESS)
     parser.add_argument('--revoke-only',
@@ -40,7 +40,7 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
     secret_key = settings['credentials']['secret_key']
     region_name = settings['credentials']['region_name']
 
-    liberator = AwsIpLiberator(access_key, secret_key, region_name, my_tag=args.my_tag)
+    liberator = AwsIpLiberator(access_key, secret_key, region_name, tag=args.tag)
 
     # create index of services
     services = make_services_index(settings)

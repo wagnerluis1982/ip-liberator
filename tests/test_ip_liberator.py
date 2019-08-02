@@ -35,7 +35,7 @@ class TestAwsIpLiberator:
     def test_authorize_rule__with_tag(self):
         # given
         with unittest.mock.patch('boto3.session.Session'):
-            self.liberator = AwsIpLiberator(**credentials, my_tag='python')
+            self.liberator = AwsIpLiberator(**credentials, tag='python')
 
         # given
         mock_ec2 = self.liberator.ec2
