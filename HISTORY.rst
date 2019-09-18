@@ -23,6 +23,7 @@ Added
 
 - Add option ``--operator`` to change the profile operator.
 - Add short option ``-p`` for ``--profile``
+- Add option ``--version`` to show current script version.
 
 Changed
 +++++++
