@@ -35,6 +35,9 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
 
     if args.operator:
         settings['config']['operator'] = args.operator
+    
+    if args.tag:
+        settings['config']['tag'] = args.tag
 
     access_key = settings['credentials']['access_key']
     secret_key = settings['credentials']['secret_key']
@@ -102,4 +105,10 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
 
 def make_services_index(settings):
     operator = settings['config']['operator']
-    return {'%s %s' % (operator, svc['name']): svc for svc in settings['config']['services']}
+    svc_index = {'%s %s' % (operator, svc['name']): svc for svc in settings['config']['services']}
+
+    tag = settings['config'].get('tag')
+    if tag:
+        return {'[%s] %s' % (tag, key): value for key, value in svc_index.items()}
+    else:
+        return svc_index
