@@ -1,7 +1,5 @@
 """Main module."""
 
-from typing import Container
-
 import boto3
 import botocore.exceptions
 
@@ -47,9 +45,11 @@ class AwsIpLiberator:
                 raise e
 
     def revoke_rule(self, rule: dict):
-        self.ec2.revoke_security_group_ingress(**self.tagged_rule(rule))
+        self.ec2.revoke_security_group_ingress(**rule)
 
-    def describe_rules(self, services: Container[str], config: dict):
+    def describe_rules(self, services: dict, config: dict):
+        if 'tag' in config:
+            services = {'[%s] %s' % (config['tag'], key): value for key, value in services.items()}
         group_ids = config['security_groups']
         groups = self.ec2.describe_security_groups(GroupIds=group_ids)['SecurityGroups']
 

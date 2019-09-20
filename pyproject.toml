@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ip-liberator"
-version = "0.2.2"
+version = "0.2.3.dev0"
 description = "A command line utility to update AWS Security Groups rules."
 authors = ["Wagner Macedo <wagnerluis1982@gmail.com>"]
 license = "GPL-3.0"
