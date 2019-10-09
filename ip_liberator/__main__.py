@@ -32,8 +32,9 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
     settings = json.load(args.settings)
     revoke_only = args.revoke_only
 
-    print("IP Liberator\n"
-          "------------")
+    banner = "IP Liberator v" + __version__
+    print(banner)
+    print("-" * len(banner))
 
     if args.my_ip:
         whats_my_ip(args.my_ip)
@@ -45,7 +46,7 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
     if args.tag:
         print('tag: %r' % args.tag)
 
-    print("------------")
+    print("-" * len(banner))
 
     access_key = settings['credentials']['access_key']
     secret_key = settings['credentials']['secret_key']
