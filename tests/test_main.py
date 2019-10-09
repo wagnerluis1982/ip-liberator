@@ -7,7 +7,7 @@ import tempfile
 from unittest import mock
 from unittest.mock import ANY
 
-from ip_liberator.__main__ import main, make_services_index
+from ip_liberator.__main__ import main, make_services_index, name_port_list
 from ip_liberator.utils import make_rules, make_rule
 
 IP = '127.0.0.1/8'
@@ -45,7 +45,7 @@ class TestMain:
         main(args=["--no-tag", "--profile", self.filename])
 
         # then
-        mock_print.assert_has_calls([mock.call("Authorizing rules", [svc for svc in index], "to IP", IP),
+        mock_print.assert_has_calls([mock.call("Authorizing rules", name_port_list(index), "to IP", IP),
                                      mock.call('-', security_groups[0])])
 
         # then
@@ -80,7 +80,7 @@ class TestMain:
         main(args=program_args)
 
         # then
-        mock_print.assert_has_calls([mock.call("Authorizing rules", [svc for svc in index], "to IP", IP),
+        mock_print.assert_has_calls([mock.call("Authorizing rules", name_port_list(index), "to IP", IP),
                                      mock.call('-', group_id)])
 
         # then
@@ -108,7 +108,7 @@ class TestMain:
         main(args=["--no-tag", "--profile", self.filename, "--revoke-only"])
 
         # then
-        mock_print.assert_has_calls([mock.call("Revoking rules", [svc for svc in index]),
+        mock_print.assert_has_calls([mock.call("Revoking rules", name_port_list(index)),
                                      mock.call('-', group_id)])
 
         # then
@@ -140,7 +140,7 @@ class TestMain:
         main(args=["--no-tag", "--profile", self.filename])
 
         # then
-        mock_print.assert_has_calls([mock.call("Authorizing rules", [svc for svc in index], "to IP", IP),
+        mock_print.assert_has_calls([mock.call("Authorizing rules", name_port_list(index), "to IP", IP),
                                      mock.call('-', group_id)])
 
         # then

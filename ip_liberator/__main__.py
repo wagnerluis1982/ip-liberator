@@ -32,14 +32,20 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
     settings = json.load(args.settings)
     revoke_only = args.revoke_only
 
+    print("IP Liberator\n"
+          "------------")
+
     if args.my_ip:
         whats_my_ip(args.my_ip)
 
     if args.operator:
+        print('operator: %r' % args.operator)
         settings['config']['operator'] = args.operator
 
     if args.tag:
-        print("[%s] tag used" % args.tag)
+        print('tag: %r' % args.tag)
+
+    print("------------")
 
     access_key = settings['credentials']['access_key']
     secret_key = settings['credentials']['secret_key']
@@ -55,7 +61,7 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
 
     # don't authorize
     if revoke_only:
-        print("Revoking rules", [svc for svc in services])
+        print("Revoking rules", name_port_list(services))
         for rule_to_revoke in revoking_rules:
             print('-', rule_to_revoke['GroupId'])
             liberator.revoke_rule(rule_to_revoke)
@@ -75,7 +81,7 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
                        for ip_range in ip_permission['IpRanges'])
 
     if len(ip_addresses) == 1:
-        print("Authorizing rules", [svc for svc in services], "to IP", ip_addresses.pop())
+        print("Authorizing rules", name_port_list(services), "to IP", ip_addresses.pop())
     else:
         for ip_range in (r for p in rule_to_authorize['IpPermissions'] for r in p['IpRanges']):
             print("Authorizing rule '%s' to IP %s" % (ip_range['Description'], ip_range['CidrIp']))
@@ -113,3 +119,6 @@ def make_services_index(settings, tag=None):
         return {'[%s] %s' % (tag, key): value for key, value in svc_index.items()}
     else:
         return svc_index
+
+def name_port_list(services):
+    return ["%s (%s)" % (svc["name"], svc["port"]) for svc in services.values()]
