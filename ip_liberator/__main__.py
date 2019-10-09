@@ -40,16 +40,15 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
 
     if args.tag:
         print("[%s] tag used" % args.tag)
-        settings['config']['tag'] = args.tag
 
     access_key = settings['credentials']['access_key']
     secret_key = settings['credentials']['secret_key']
     region_name = settings['credentials']['region_name']
 
-    liberator = AwsIpLiberator(access_key, secret_key, region_name, tag=args.tag)
+    liberator = AwsIpLiberator(access_key, secret_key, region_name)
 
     # create index of services
-    services = make_services_index(settings)
+    services = make_services_index(settings, args.tag)
 
     # rules to revoke matching config entries
     revoking_rules = liberator.describe_rules(services, settings['config'])
@@ -106,6 +105,11 @@ def main(program=sys.argv[0], args=sys.argv[1:]):
     return 0
 
 
-def make_services_index(settings):
+def make_services_index(settings, tag=None):
     operator = settings['config']['operator']
-    return {'%s %s' % (operator, svc['name']): svc for svc in settings['config']['services']}
+    svc_index = {'%s %s' % (operator, svc['name']): svc for svc in settings['config']['services']}
+
+    if tag:
+        return {'[%s] %s' % (tag, key): value for key, value in svc_index.items()}
+    else:
+        return svc_index

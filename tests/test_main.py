@@ -49,47 +49,45 @@ class TestMain:
                                      mock.call('-', security_groups[0])])
 
         # then
-        mock_aws_class.assert_called_once_with(access_key, secret_key, region_name, tag=None)
+        mock_aws_class.assert_called_once_with(access_key, secret_key, region_name)
         mock_liberator = mock_aws_class.return_value
         mock_liberator.describe_rules.assert_called_once_with(index, settings['config'])
         mock_liberator.authorize_rule.assert_called_once_with(rule)
 
     def test_main__with_tag(self, mock_print, mock_aws_class):
+        self.__assert_call_with_tag(mock_print, mock_aws_class, tag="my-fancy-tag")
+
+    def test_main__with_default_tag(self, mock_print, mock_aws_class):
+        self.__assert_call_with_tag(mock_print, mock_aws_class)
+
+    def __assert_call_with_tag(self, mock_print, mock_aws_class, tag="ip-liberator"):
         # given
         group_id = "sg-1"
-        tag = "ip-liberator"
         settings = make_settings(security_groups=[group_id])
-        settings['config']['tag'] = tag
-        index = make_services_index(settings)
+        index = make_services_index(settings, tag)
         rule = next(make_rules(index, settings['config']))
 
         # given
         with os.fdopen(self.fd, mode='w') as file:
             json.dump(settings, file)
 
+        # given
+        program_args = ["--profile", self.filename]
+        if tag != "ip-liberator":
+            program_args += ["--tag", tag]
+
         # when
-        main(args=["--profile", self.filename])
+        main(args=program_args)
 
         # then
         mock_print.assert_has_calls([mock.call("Authorizing rules", [svc for svc in index], "to IP", IP),
                                      mock.call('-', group_id)])
 
         # then
-        mock_aws_class.assert_called_once_with(ANY, ANY, ANY, tag=tag)
+        mock_aws_class.assert_called_once_with(ANY, ANY, ANY)
         mock_liberator = mock_aws_class.return_value
         mock_liberator.describe_rules.assert_called_once_with(index, settings['config'])
         mock_liberator.authorize_rule.assert_called_once_with(rule)
-
-    def test_main__with_default_tag(self, mock_print, mock_aws_class):
-        # given
-        with os.fdopen(self.fd, mode='w') as file:
-            json.dump(make_settings(), file)
-
-        # when
-        main(args=["--profile", self.filename])
-
-        # then
-        mock_aws_class.assert_called_once_with(ANY, ANY, ANY, tag="ip-liberator")
 
     def test_main__revoke_only(self, mock_print, mock_aws_class):
         # given
