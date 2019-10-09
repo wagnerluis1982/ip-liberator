@@ -12,19 +12,18 @@ class AwsIpLiberator:
     :param region_name: AWS region name
     """
 
-    def __init__(self, access_key: str, secret_key: str, region_name: str, tag: str = None):
+    def __init__(self, access_key: str, secret_key: str, region_name: str):
         session = boto3.session.Session(
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
             region_name=region_name
         )
         self.ec2 = session.client('ec2')
-        self.tag = tag
 
     def authorize_rule(self, rule: dict):
         # rule authorization
         try:
-            self.ec2.authorize_security_group_ingress(**self.tagged_rule(rule))
+            self.ec2.authorize_security_group_ingress(**rule)
         # in case of problems to authorize
         except botocore.exceptions.ClientError as e:
             # when a permission is duplicated
@@ -48,8 +47,6 @@ class AwsIpLiberator:
         self.ec2.revoke_security_group_ingress(**rule)
 
     def describe_rules(self, services: dict, config: dict):
-        if 'tag' in config:
-            services = {'[%s] %s' % (config['tag'], key): value for key, value in services.items()}
         group_ids = config['security_groups']
         groups = self.ec2.describe_security_groups(GroupIds=group_ids)['SecurityGroups']
 
@@ -72,27 +69,3 @@ class AwsIpLiberator:
                 'GroupId': group_id,
                 'IpPermissions': ip_permissions
             }
-
-    def tagged_rule(self, rule: dict) -> dict:
-        if not self.tag:
-            return rule
-
-        new_rule = {
-            **rule,
-            'IpPermissions': [
-                {
-                    **ip_permission,
-                    'IpRanges': [
-                        {
-                            **ip_range,
-                            'Description': self.tag_description(ip_range['Description'])
-                        }
-                        for ip_range in ip_permission['IpRanges']]
-                }
-                for ip_permission in rule['IpPermissions']
-            ]
-        }
-        return new_rule
-
-    def tag_description(self, description: str):
-        return description if not self.tag else '[%s] %s' % (self.tag, description)

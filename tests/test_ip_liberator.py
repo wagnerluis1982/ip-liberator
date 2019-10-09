@@ -32,22 +32,6 @@ class TestAwsIpLiberator:
         # then
         mock_ec2.authorize_security_group_ingress.assert_called_once_with(**any_dict)
 
-    def test_authorize_rule__with_tag(self):
-        # given
-        with unittest.mock.patch('boto3.session.Session'):
-            self.liberator = AwsIpLiberator(**credentials, tag='python')
-
-        # given
-        mock_ec2 = self.liberator.ec2
-        rule = {'IpPermissions': [{'IpRanges': [{'Description': 'Python is Cool', 'CidrIp': '1.2.3.4/8'}]}]}
-
-        # when
-        self.liberator.authorize_rule(rule)
-
-        # then
-        tagged_rule = {'IpPermissions': [{'IpRanges': [{'Description': '[python] Python is Cool', 'CidrIp': '1.2.3.4/8'}]}]}
-        mock_ec2.authorize_security_group_ingress.assert_called_once_with(**tagged_rule)
-
     def test_authorize_rule__error_reraised(self):
         # given
         error = botocore.exceptions.ClientError(unittest.mock.NonCallableMagicMock(), 'test')
