@@ -24,6 +24,7 @@ for line in sys.stdin:
 endef
 export PRINT_HELP_PYSCRIPT
 
+SHELL := /bin/bash
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 help:
@@ -81,7 +82,10 @@ release: dist ## package and upload a release
 	poetry publish
 
 dist: clean ## builds source and wheel package
+	@cp -a README.rst README.rst.bak
+	@cat <(echo -e '\n') HISTORY.rst >> README.rst
 	poetry build
+	@mv README.rst.bak README.rst
 
 install: clean ## install the package to the active Python's site-packages
 	pip3 install .
