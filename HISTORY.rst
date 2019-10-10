@@ -7,6 +7,20 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`_,
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
+0.2.4 (2019-10-10)
+------------------
+
+Added
++++++
+
+- Improve script output showing version and a cool summary of settings.
+
+Fixed
++++++
+
+- When using a tag, the script was always reauthorizing even when IP was not changed,
+  this version fixed this bad behavior.
+
 0.2.3 (2019-09-20)
 ------------------
 
