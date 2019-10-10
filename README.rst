@@ -78,9 +78,13 @@ To accomplish it, simply run:
 .. code-block:: console
 
     $ ip-liberator --profile /path/my-profile.json
-    Authorizing rules ['John FTP+SSH', 'John HTTPS'] to IP 192.30.253.112/32
-    - sg-<GROUP_ID_1>
-    - sg-<GROUP_ID_2>
+    IP Liberator v0.2.4
+    -------------------
+    operator: 'John'
+    tag: 'ip-liberator'
+    -------------------
+    Authorizing rules ['FTP+SFTP (21-22)', 'HTTPS (443)']
+
 
 Credits
 -------
