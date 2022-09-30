@@ -27,6 +27,8 @@ export PRINT_HELP_PYSCRIPT
 SHELL := /bin/bash
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
+RUN := poetry run
+
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
@@ -52,17 +54,17 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8
-	flake8 ip_liberator tests
+	$(RUN) flake8 ip_liberator tests
 
 test: ## run tests quickly with the default Python
-	py.test
+	$(RUN) py.test
 
 test-all: ## run tests on every Python version with tox
-	tox
+	@echo @fixme pending tox proper setup
 
 coverage: ## check code coverage quickly with the default Python
-	pytest --cov
-	coverage html
+	$(RUN) pytest --cov
+	$(RUN) coverage html
 ifndef NO_BROWSER
 	$(BROWSER) htmlcov/index.html
 endif
@@ -76,7 +78,7 @@ docs: ## generate Sphinx HTML documentation, including API docs
 	$(BROWSER) docs/_build/html/index.html
 
 servedocs: docs ## compile the docs watching for changes
-	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
+	$(RUN) watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 release: dist ## package and upload a release
 	poetry publish
