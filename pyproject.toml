@@ -31,7 +31,7 @@ ip-liberator = 'ip_liberator.__main__:main'
 
 [tool.poetry.dependencies]
 python = "^3.6"
-boto3 = "1.9.133"
+boto3 = "^1.9.133"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.6"
